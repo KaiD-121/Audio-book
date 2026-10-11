@@ -121,9 +121,9 @@
     <div class="container">
         <h1>瘋了！筆下女魔頭從書裡跑出來了</h1>
         
-        <!-- Google 文件來源連結 -->
+        <!-- Google 文件來源連結 (已更新為最新共用連結) -->
         <div class="doc-link">
-            <a href="https://docs.google.com/document/d/1T-PYFvGjYdqLqQQi3nnaQ2u7eMn68eMSHUFjgR1fc_s/edit?tab=t.0" target="_blank">
+            <a href="https://docs.google.com/document/d/1T-PYFvGjYdqLqQQi3nnaQ2u7eMn68eMSHUFjgR1fc_s/edit?usp=sharing" target="_blank">
                 📖 點此開啟閱讀原始 Google 文件
             </a>
         </div>
@@ -148,14 +148,13 @@
         // ==========================================
         // 1. 基本設定
         // ==========================================
-        // 已經替換為您專屬的 GAS 網址
         const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwqkMTvEFo-gtBXWWCm0B6wK-HrxT6q4qkwjl-nMw_g5Apjk_4vyLdVE0HKWRAgB38opA/exec"; 
         const USER_ID = "my_audio_user"; 
 
         // ==========================================
         // 2. 系統狀態變數
         // ==========================================
-        let novelData = []; // 改由後端動態載入
+        let novelData = []; 
         let currentChapter = 0;
         let currentParagraph = 0;
         let isPlaying = false;
@@ -163,9 +162,9 @@
 
         // 初始化
         document.addEventListener("DOMContentLoaded", async () => {
-            await fetchNovelData(); // 先抓小說內容
-            await fetchProgress();  // 再抓雲端進度
-            buildChapterSelect();   // 建立下拉選單
+            await fetchNovelData(); 
+            await fetchProgress();  
+            buildChapterSelect();   
             renderText();
             document.getElementById("loading-overlay").style.display = "none";
         });
@@ -187,7 +186,7 @@
         function changeChapter() {
             const select = document.getElementById("chapter-select");
             currentChapter = parseInt(select.value);
-            currentParagraph = 0; // 切換章節時，從頭開始念
+            currentParagraph = 0; 
             synth.cancel();
             renderText();
             if(isPlaying) readParagraph();
@@ -310,26 +309,3 @@
             } catch(e) {
                 console.log("無法獲取雲端進度，載入本地進度");
                 currentChapter = parseInt(localStorage.getItem('audiobook_progress_chapter')) || 0;
-                currentParagraph = parseInt(localStorage.getItem('audiobook_progress_para')) || 0;
-            }
-        }
-
-        // 儲存進度
-        async function syncProgress() {
-            try {
-                document.getElementById("btn-sync").innerText = "⏳ 儲存中...";
-                await fetch(GAS_WEB_APP_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ userId: USER_ID, chapter: currentChapter, paragraphIndex: currentParagraph })
-                });
-                document.getElementById("btn-sync").innerText = "✅ 儲存成功！";
-                setTimeout(() => document.getElementById("btn-sync").innerText = "☁️ 儲存進度至雲端", 2500);
-            } catch(e) {
-                alert("儲存失敗，請確認您的網路連線。");
-                document.getElementById("btn-sync").innerText = "☁️ 重新儲存";
-            }
-        }
-    </script>
-</body>
-</html>
