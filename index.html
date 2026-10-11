@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>有聲書：瘋了！筆下女魔頭從書裡跑出來了</title>
+    <style>
+        body {
+            font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
+            background-color: #fcf9f2;
+            color: #333;
+            line-height: 1.8;
+            padding: 20px;
+        }
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        h1 {
+            font-size: 24px;
+            text-align: center;
+            color: #4a4a4a;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        h2 { font-size: 18px; color: #666; text-align: center; margin-bottom: 20px;}
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0 30px 0;
+        }
+        button {
+            background-color: #d4a5a5;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        button:hover { background-color: #c08585; }
+        .text-display p {
+            font-size: 17px;
+            padding: 10px;
+            border-radius: 8px;
+            transition: background-color 0.3s;
+            cursor: pointer;
+            text-indent: 2em;
+        }
+        .text-display p:hover { background-color: #fafafa; }
+        .highlight {
+            background-color: #ffe8e8 !important;
+            font-weight: bold;
+            color: #b35959;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>瘋了！筆下女魔頭從書裡跑出來了</h1>
+        <h2 id="chapter-title">載入中...</h2>
+        
+        <div class="controls">
+            <button id="btn-play" onclick="togglePlay()">▶️ 播放 / 暫停</button>
+            <button id="btn-sync" onclick="syncProgress()">☁️ 儲存進度</button>
+        </div>
+
+        <div id="text-display" class="text-display">
+            <!-- 小說內容會動態載入這裡 -->
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. 基本設定 (請更換為您的 GAS 網址)
+        // ==========================================
+        const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwqkMTvEFo-gtBXWWCm0B6wK-HrxT6q4qkwjl-nMw_g5Apjk_4vyLdVE0HKWRAgB38opA/exec";
+        const USER_ID = "my_audio_user"; // 可自訂您的專屬 ID
+
+        // ==========================================
+        // 2. 有聲書文字資料庫
+        // ==========================================
+        const novelData = [
+            {
+                title: "第001章 九星連珠天降之人",
+                paragraphs: [
+                    "根據本台從天文館得到的訊息，今天晚上會出現一千年一遇的九星連珠異象！",
+                    "傳說中九星連珠的時候會天降異象，發生很多神奇的事情。",
+                    "當然啦，這些都是古人美好的幻想，我們的現實生活之中是不可能發生這些神話傳說的……",
+                    "晚上11點半，蘇衍出去吃消夜的時候，看到本地新聞台正在重播下午六點半的新聞。",
+                    "女主持人和男嘉賓在電視上滔滔不絕地講述著九星連珠的知識點。",
+                    "蘇衍一邊吃燴麵一邊看得津津有味。",
+                    "樓下這一家阿霞餐館的燴麵一大盤只要十五塊，還放肉片、青椒、紅椒、香菜，簡直是童叟無欺。",
+                    "吃完消夜，蘇衍就準備回家休息了，順便抬頭朝著天空看過去，只能看到光污染非常嚴重的天空，除了月亮，一顆星星都看不見，做夢的九星連珠呢！",
+                    "「吃飽了好像也睡不著，算了回家去寫稿子吧……」",
+                    "當蘇衍哼著歌，打開自己的家門之後，卻發現一個穿著黑金色的漢服的女孩子正坐在沙發上面。",
+                    "「對不起……我走錯了！」蘇衍幾乎是本能地重新關上了門，連這個女孩子長什麼樣子都還沒來得及看清楚。"
+                ]
+            }
+        ];
+
+        // ==========================================
+        // 3. 系統狀態變數
+        // ==========================================
+        let currentChapter = 0;
+        let currentParagraph = 0;
+        let isPlaying = false;
+        let synth = window.speechSynthesis;
+
+        // 初始化
+        document.addEventListener("DOMContentLoaded", async () => {
+            await fetchProgress(); // 從雲端拉取進度
+            renderText();
+        });
+
+        // 渲染小說內容到畫面
+        function renderText() {
+            document.getElementById("chapter-title").innerText = novelData[currentChapter].title;
+            const display = document.getElementById("text-display");
+            display.innerHTML = "";
+            
+            novelData[currentChapter].paragraphs.forEach((pText, index) => {
+                let p = document.createElement("p");
+                p.innerText = pText;
+                p.id = "p-" + index;
+                if(index === currentParagraph) p.classList.add("highlight");
+                
+                // 點擊段落即可跳轉播放進度
+                p.onclick = () => {
+                    currentParagraph = index;
+                    synth.cancel();
+                    renderText();
+                    if(isPlaying) readParagraph();
+                };
+                display.appendChild(p);
+            });
+            
+            // 自動滾動到正在閱讀的段落
+            const activeP = document.getElementById("p-" + currentParagraph);
+            if(activeP) {
+                activeP.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+        }
+
+        // 播放與暫停控制
+        function togglePlay() {
+            if (isPlaying) {
+                synth.pause();
+                isPlaying = false;
+                document.getElementById("btn-play").innerText = "▶️ 繼續播放";
+            } else {
+                if(synth.paused) {
+                    synth.resume();
+                } else {
+                    readParagraph();
+                }
+                isPlaying = true;
+                document.getElementById("btn-play").innerText = "⏸ 暫停播放";
+            }
+        }
+
+        // 語音朗讀與情緒參數微調
+        function readParagraph() {
+            if (currentParagraph >= novelData[currentChapter].paragraphs.length) {
+                isPlaying = false;
+                document.getElementById("btn-play").innerText = "▶️ 重新播放";
+                return; 
+            }
+
+            renderText(); 
+            
+            let textToRead = novelData[currentChapter].paragraphs[currentParagraph];
+            let utterance = new SpeechSynthesisUtterance(textToRead);
+            
+            // 語音參數設定：年輕輕柔女聲設定
+            utterance.lang = 'zh-TW';
+            utterance.pitch = 1.35; // 提高音調，增加年輕感
+            utterance.rate = 0.85;  // 放慢語速，製造說故事的停頓感
+            utterance.volume = 0.9;
+            
+            // 強制抓取系統中的中文女聲
+            let voices = synth.getVoices();
+            let twVoice = voices.find(v => v.lang.includes('zh') && (v.name.includes('Female') || v.name.includes('Google') || v.name.includes('Xiaoxiao')));
+            if(twVoice) utterance.voice = twVoice;
+
+            // 唸完當前段落的處理
+            utterance.onend = () => {
+                currentParagraph++;
+                localStorage.setItem('audiobook_progress', currentParagraph); // 備份至瀏覽器
+                if (isPlaying) readParagraph(); // 遞迴播放下一段
+            };
+
+            synth.speak(utterance);
+        }
+
+        // 確保瀏覽器語音庫加載
+        speechSynthesis.onvoiceschanged = () => { synth.getVoices(); };
+
+        // ==========================================
+        // 4. GAS API 連線 (雲端進度同步)
+        // ==========================================
+        async function fetchProgress() {
+            try {
+                let response = await fetch(GAS_WEB_APP_URL + "?userId=" + USER_ID);
+                let data = await response.json();
+                currentChapter = data.chapter || 0;
+                currentParagraph = data.paragraphIndex || 0;
+            } catch(e) {
+                console.log("無法獲取雲端進度，載入本地進度");
+                currentParagraph = parseInt(localStorage.getItem('audiobook_progress')) || 0;
+            }
+        }
+
+        async function syncProgress() {
+            try {
+                document.getElementById("btn-sync").innerText = "⏳ 儲存中...";
+                
+                // 使用 text/plain 避免跨網域 CORS preflight 問題
+                await fetch(GAS_WEB_APP_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ userId: USER_ID, chapter: currentChapter, paragraphIndex: currentParagraph })
+                });
+                
+                document.getElementById("btn-sync").innerText = "✅ 儲存成功！";
+                setTimeout(() => document.getElementById("btn-sync").innerText = "☁️ 儲存進度", 2500);
+            } catch(e) {
+                alert("儲存失敗，請確認您的 GAS 網址是否正確且已設定為「所有人」存取。");
+                document.getElementById("btn-sync").innerText = "☁️ 重新儲存";
+            }
+        }
+    </script>
+</body>
+</html>
