@@ -121,7 +121,7 @@
     <div class="container">
         <h1>瘋了！筆下女魔頭從書裡跑出來了</h1>
         
-        <!-- Google 文件來源連結 (已更新為最新共用連結) -->
+        <!-- Google 文件來源連結 -->
         <div class="doc-link">
             <a href="https://docs.google.com/document/d/1T-PYFvGjYdqLqQQi3nnaQ2u7eMn68eMSHUFjgR1fc_s/edit?usp=sharing" target="_blank">
                 📖 點此開啟閱讀原始 Google 文件
@@ -309,3 +309,26 @@
             } catch(e) {
                 console.log("無法獲取雲端進度，載入本地進度");
                 currentChapter = parseInt(localStorage.getItem('audiobook_progress_chapter')) || 0;
+                currentParagraph = parseInt(localStorage.getItem('audiobook_progress_para')) || 0;
+            }
+        }
+
+        // 儲存進度
+        async function syncProgress() {
+            try {
+                document.getElementById("btn-sync").innerText = "⏳ 儲存中...";
+                await fetch(GAS_WEB_APP_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ userId: USER_ID, chapter: currentChapter, paragraphIndex: currentParagraph })
+                });
+                document.getElementById("btn-sync").innerText = "✅ 儲存成功！";
+                setTimeout(() => document.getElementById("btn-sync").innerText = "☁️ 儲存進度至雲端", 2500);
+            } catch(e) {
+                alert("儲存失敗，請確認您的網路連線。");
+                document.getElementById("btn-sync").innerText = "☁️ 重新儲存";
+            }
+        }
+    </script>
+</body>
+</html>
