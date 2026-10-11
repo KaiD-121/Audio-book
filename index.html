@@ -5,123 +5,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>有聲書：瘋了！筆下女魔頭從書裡跑出來了</title>
     <style>
-        body {
-            font-family: "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", sans-serif;
-            background-color: #fcf9f2;
-            color: #333;
-            line-height: 1.8;
-            padding: 20px;
-        }
-        .container {
-            max-width: 700px;
-            margin: 0 auto;
-            background: #fff;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-        }
-        h1 {
-            font-size: 24px;
-            text-align: center;
-            color: #4a4a4a;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
-        }
-        .doc-link {
-            display: block;
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: 14px;
-        }
-        .doc-link a {
-            color: #4a90e2;
-            text-decoration: none;
-            font-weight: bold;
-            padding: 5px 10px;
-            background-color: #f0f4f8;
-            border-radius: 15px;
-            transition: 0.3s;
-        }
-        .doc-link a:hover {
-            background-color: #dbeafe;
-        }
-        .chapter-selector {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-bottom: 20px;
-            gap: 10px;
-        }
-        select {
-            padding: 8px 15px;
-            font-size: 16px;
-            border-radius: 8px;
-            border: 1px solid #ccc;
-            outline: none;
-            width: 70%;
-            cursor: pointer;
-        }
+        body { font-family: "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", sans-serif; background-color: #fcf9f2; color: #333; line-height: 1.8; padding: 20px; }
+        .container { max-width: 700px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        h1 { font-size: 24px; text-align: center; color: #4a4a4a; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px; }
+        .doc-link { display: block; text-align: center; margin-bottom: 20px; font-size: 14px; }
+        .doc-link a { color: #4a90e2; text-decoration: none; font-weight: bold; padding: 5px 10px; background-color: #f0f4f8; border-radius: 15px; transition: 0.3s; }
+        .doc-link a:hover { background-color: #dbeafe; }
+        .chapter-selector { display: flex; justify-content: center; align-items: center; margin-bottom: 20px; gap: 10px; }
+        select { padding: 8px 15px; font-size: 16px; border-radius: 8px; border: 1px solid #ccc; outline: none; width: 70%; cursor: pointer; }
         h2 { font-size: 18px; color: #666; text-align: center; margin-bottom: 20px;}
-        .controls {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin: 20px 0 30px 0;
-        }
-        button {
-            background-color: #d4a5a5;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 30px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: 0.3s;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
+        .controls { display: flex; justify-content: center; flex-wrap: wrap; gap: 15px; margin: 20px 0 30px 0; }
+        button { background-color: #d4a5a5; color: white; border: none; padding: 12px 24px; border-radius: 30px; font-size: 16px; cursor: pointer; transition: 0.3s; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         button:hover { background-color: #c08585; }
-        .text-display p {
-            font-size: 17px;
-            padding: 10px;
-            border-radius: 8px;
-            transition: background-color 0.3s;
-            cursor: pointer;
-            text-indent: 2em;
-            letter-spacing: 0.5px;
-        }
+        .text-display p { font-size: 17px; padding: 10px; border-radius: 8px; transition: background-color 0.3s; cursor: pointer; text-indent: 2em; letter-spacing: 0.5px; }
         .text-display p:hover { background-color: #fafafa; }
-        .highlight {
-            background-color: #ffe8e8 !important;
-            font-weight: bold;
-            color: #b35959;
-        }
-        #loading-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255,255,255,0.9);
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            z-index: 1000; font-size: 20px; color: #b35959; font-weight: bold;
-        }
-        .spinner {
-            border: 4px solid #f3f3f3; border-top: 4px solid #d4a5a5;
-            border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;
-            margin-bottom: 15px;
-        }
+        .highlight { background-color: #ffe8e8 !important; font-weight: bold; color: #b35959; }
+        #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; font-size: 20px; color: #b35959; font-weight: bold; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #d4a5a5; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #debug-log { color: red; font-size: 14px; text-align: center; margin-top: 20px; display: none; }
     </style>
 </head>
 <body>
     <div id="loading-overlay">
         <div class="spinner"></div>
         <div id="loading-text">從 Google 載入有聲書資料中...</div>
+        <div id="debug-log"></div>
     </div>
 
     <div class="container">
         <h1>瘋了！筆下女魔頭從書裡跑出來了</h1>
         
+        <!-- 更新後的小說 Google 文件連結 -->
         <div class="doc-link">
-            <a href="https://docs.google.com/document/d/1T-PYFvGjYdqLqQQi3nnaQ2u7eMn68eMSHUFjgR1fc_s/edit?usp=sharing" target="_blank">
+            <a href="https://docs.google.com/document/d/15urL__szOqGfGQ-B20BtNPvFMaYdOFtq67RdQvd9Acc/edit?usp=sharing" target="_blank">
                 📖 點此開啟閱讀原始 Google 文件
             </a>
         </div>
@@ -142,9 +59,8 @@
     </div>
 
     <script>
-        // 您的 GAS 網址
         const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwqkMTvEFo-gtBXWWCm0B6wK-HrxT6q4qkwjl-nMw_g5Apjk_4vyLdVE0HKWRAgB38opA/exec"; 
-        const USER_ID = "my_audio_user"; 
+        const USER_TAG = "my_audio_user"; 
 
         let novelData = []; 
         let currentChapter = 0;
@@ -152,13 +68,17 @@
         let isPlaying = false;
         let synth = window.speechSynthesis;
 
-        // ==========================================
-        // 萬無一失的 JSONP 資料讀取機制
-        // ==========================================
+        // JSONP 資料讀取機制
         function fetchJSONP(url) {
             return new Promise((resolve, reject) => {
                 const callbackName = 'jsonp_callback_' + Math.round(100000 * Math.random());
+                const timeoutId = setTimeout(() => {
+                    delete window[callbackName];
+                    reject(new Error("連線逾時"));
+                }, 15000);
+
                 window[callbackName] = function(data) {
+                    clearTimeout(timeoutId);
                     delete window[callbackName];
                     document.body.removeChild(script);
                     resolve(data);
@@ -166,37 +86,48 @@
 
                 const script = document.createElement('script');
                 script.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'callback=' + callbackName;
-                script.onerror = reject;
+                script.onerror = () => {
+                    clearTimeout(timeoutId);
+                    reject(new Error("載入失敗"));
+                };
                 document.body.appendChild(script);
             });
         }
 
-        // 初始化
         document.addEventListener("DOMContentLoaded", async () => {
+            const debugLog = document.getElementById("debug-log");
             try {
-                // 1. 抓取小說內容
                 document.getElementById("loading-text").innerText = "讀取小說章節中...";
                 let novelResponse = await fetchJSONP(GAS_WEB_APP_URL + "?action=getNovel");
-                if (novelResponse.error) throw new Error(novelResponse.error);
+                
+                if (novelResponse.error) {
+                    throw new Error(novelResponse.error);
+                }
+                
+                if (!Array.isArray(novelResponse) || novelResponse.length === 0) {
+                     throw new Error("章節內容為空");
+                }
+
                 novelData = novelResponse;
 
-                // 2. 抓取閱讀進度
                 document.getElementById("loading-text").innerText = "載入上次進度中...";
-                let progressResponse = await fetchJSONP(GAS_WEB_APP_URL + "?action=getProgress&userId=" + USER_ID);
+                let progressResponse = await fetchJSONP(GAS_WEB_APP_URL + "?action=getProgress&userId=" + USER_TAG);
+
                 currentChapter = progressResponse.chapter || parseInt(localStorage.getItem('audiobook_progress_chapter')) || 0;
                 currentParagraph = progressResponse.paragraphIndex || parseInt(localStorage.getItem('audiobook_progress_para')) || 0;
 
                 buildChapterSelect();   
                 renderText();
                 document.getElementById("loading-overlay").style.display = "none";
+
             } catch(e) {
-                console.error(e);
-                alert("載入失敗！請確認 GAS 已「建立新版本」重新部署，且執行身分為「我」。錯誤詳情請看開發者主控台。");
+                console.error("載入失敗:", e);
                 document.getElementById("loading-text").innerText = "載入失敗 ❌";
+                debugLog.style.display = "block";
+                debugLog.innerText = "錯誤資訊: " + e.message;
             }
         });
 
-        // 以下為原有的介面控制邏輯
         function buildChapterSelect() {
             const select = document.getElementById("chapter-select");
             select.innerHTML = "";
@@ -299,21 +230,20 @@
 
         speechSynthesis.onvoiceschanged = () => { synth.getVoices(); };
 
-        // 儲存進度 (使用無跨域問題的 no-cors mode 傳送 POST)
         async function syncProgress() {
             try {
                 document.getElementById("btn-sync").innerText = "⏳ 儲存中...";
                 await fetch(GAS_WEB_APP_URL, {
                     method: 'POST',
-                    mode: 'no-cors', // 告訴瀏覽器不要管 CORS 限制，直接送出
+                    mode: 'no-cors', 
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ userId: USER_ID, chapter: currentChapter, paragraphIndex: currentParagraph })
+                    body: JSON.stringify({ userId: USER_TAG, chapter: currentChapter, paragraphIndex: currentParagraph })
                 });
                 
                 document.getElementById("btn-sync").innerText = "✅ 儲存成功！";
                 setTimeout(() => document.getElementById("btn-sync").innerText = "☁️ 儲存進度至雲端", 2500);
             } catch(e) {
-                alert("儲存可能失敗，請確認您的網路連線。");
+                alert("儲存可能失敗，請確認網路連線。");
                 document.getElementById("btn-sync").innerText = "☁️ 重新儲存";
             }
         }
