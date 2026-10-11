@@ -112,23 +112,20 @@
     </style>
 </head>
 <body>
-    <!-- 讀取中覆蓋層 -->
     <div id="loading-overlay">
         <div class="spinner"></div>
-        <div>從 Google 文件讀取小說內容中...</div>
+        <div id="loading-text">從 Google 載入有聲書資料中...</div>
     </div>
 
     <div class="container">
         <h1>瘋了！筆下女魔頭從書裡跑出來了</h1>
         
-        <!-- Google 文件來源連結 -->
         <div class="doc-link">
             <a href="https://docs.google.com/document/d/1T-PYFvGjYdqLqQQi3nnaQ2u7eMn68eMSHUFjgR1fc_s/edit?usp=sharing" target="_blank">
                 📖 點此開啟閱讀原始 Google 文件
             </a>
         </div>
         
-        <!-- 章節選擇器 -->
         <div class="chapter-selector">
             <label for="chapter-select"><strong>目錄：</strong></label>
             <select id="chapter-select" onchange="changeChapter()"></select>
@@ -145,31 +142,61 @@
     </div>
 
     <script>
-        // ==========================================
-        // 1. 基本設定
-        // ==========================================
+        // 您的 GAS 網址
         const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwqkMTvEFo-gtBXWWCm0B6wK-HrxT6q4qkwjl-nMw_g5Apjk_4vyLdVE0HKWRAgB38opA/exec"; 
         const USER_ID = "my_audio_user"; 
 
-        // ==========================================
-        // 2. 系統狀態變數
-        // ==========================================
         let novelData = []; 
         let currentChapter = 0;
         let currentParagraph = 0;
         let isPlaying = false;
         let synth = window.speechSynthesis;
 
+        // ==========================================
+        // 萬無一失的 JSONP 資料讀取機制
+        // ==========================================
+        function fetchJSONP(url) {
+            return new Promise((resolve, reject) => {
+                const callbackName = 'jsonp_callback_' + Math.round(100000 * Math.random());
+                window[callbackName] = function(data) {
+                    delete window[callbackName];
+                    document.body.removeChild(script);
+                    resolve(data);
+                };
+
+                const script = document.createElement('script');
+                script.src = url + (url.indexOf('?') >= 0 ? '&' : '?') + 'callback=' + callbackName;
+                script.onerror = reject;
+                document.body.appendChild(script);
+            });
+        }
+
         // 初始化
         document.addEventListener("DOMContentLoaded", async () => {
-            await fetchNovelData(); 
-            await fetchProgress();  
-            buildChapterSelect();   
-            renderText();
-            document.getElementById("loading-overlay").style.display = "none";
+            try {
+                // 1. 抓取小說內容
+                document.getElementById("loading-text").innerText = "讀取小說章節中...";
+                let novelResponse = await fetchJSONP(GAS_WEB_APP_URL + "?action=getNovel");
+                if (novelResponse.error) throw new Error(novelResponse.error);
+                novelData = novelResponse;
+
+                // 2. 抓取閱讀進度
+                document.getElementById("loading-text").innerText = "載入上次進度中...";
+                let progressResponse = await fetchJSONP(GAS_WEB_APP_URL + "?action=getProgress&userId=" + USER_ID);
+                currentChapter = progressResponse.chapter || parseInt(localStorage.getItem('audiobook_progress_chapter')) || 0;
+                currentParagraph = progressResponse.paragraphIndex || parseInt(localStorage.getItem('audiobook_progress_para')) || 0;
+
+                buildChapterSelect();   
+                renderText();
+                document.getElementById("loading-overlay").style.display = "none";
+            } catch(e) {
+                console.error(e);
+                alert("載入失敗！請確認 GAS 已「建立新版本」重新部署，且執行身分為「我」。錯誤詳情請看開發者主控台。");
+                document.getElementById("loading-text").innerText = "載入失敗 ❌";
+            }
         });
 
-        // 建立章節下拉選單
+        // 以下為原有的介面控制邏輯
         function buildChapterSelect() {
             const select = document.getElementById("chapter-select");
             select.innerHTML = "";
@@ -182,7 +209,6 @@
             });
         }
 
-        // 使用者透過下拉選單切換章節
         function changeChapter() {
             const select = document.getElementById("chapter-select");
             currentChapter = parseInt(select.value);
@@ -192,7 +218,6 @@
             if(isPlaying) readParagraph();
         }
 
-        // 渲染小說內容到畫面
         function renderText() {
             if(!novelData[currentChapter]) return;
             document.getElementById("chapter-title").innerText = novelData[currentChapter].title;
@@ -205,7 +230,6 @@
                 p.id = "p-" + index;
                 if(index === currentParagraph) p.classList.add("highlight");
                 
-                // 點擊段落即可跳轉播放進度
                 p.onclick = () => {
                     currentParagraph = index;
                     synth.cancel();
@@ -215,15 +239,12 @@
                 display.appendChild(p);
             });
             
-            // 自動滾動到正在閱讀的段落
             const activeP = document.getElementById("p-" + currentParagraph);
             if(activeP) activeP.scrollIntoView({ behavior: "smooth", block: "center" });
             
-            // 同步更新下拉選單顯示狀態
             document.getElementById("chapter-select").value = currentChapter;
         }
 
-        // 播放與暫停控制
         function togglePlay() {
             if (isPlaying) {
                 synth.pause();
@@ -240,10 +261,8 @@
             }
         }
 
-        // 語音朗讀 (使用 Edge 瀏覽器效果最佳)
         function readParagraph() {
             if (currentParagraph >= novelData[currentChapter].paragraphs.length) {
-                // 自動跳下一章
                 if (currentChapter < novelData.length - 1) {
                     currentChapter++;
                     currentParagraph = 0;
@@ -280,52 +299,21 @@
 
         speechSynthesis.onvoiceschanged = () => { synth.getVoices(); };
 
-        // ==========================================
-        // 4. GAS API 連線 (抓小說內容與進度同步)
-        // ==========================================
-        // 抓取 Google 文件內容
-        async function fetchNovelData() {
-            try {
-                let response = await fetch(GAS_WEB_APP_URL + "?action=getNovel");
-                let data = await response.json();
-                if(data.error) {
-                    alert("讀取文件發生錯誤，請確認 GAS 程式碼設定，並確認該 Google 文件為公開或您有權限讀取。");
-                } else {
-                    novelData = data;
-                }
-            } catch(e) {
-                alert("無法連線至 Google 文件，請檢查網址設定。");
-                console.log(e);
-            }
-        }
-
-        // 抓取雲端進度
-        async function fetchProgress() {
-            try {
-                let response = await fetch(GAS_WEB_APP_URL + "?action=getProgress&userId=" + USER_ID);
-                let data = await response.json();
-                currentChapter = data.chapter || parseInt(localStorage.getItem('audiobook_progress_chapter')) || 0;
-                currentParagraph = data.paragraphIndex || parseInt(localStorage.getItem('audiobook_progress_para')) || 0;
-            } catch(e) {
-                console.log("無法獲取雲端進度，載入本地進度");
-                currentChapter = parseInt(localStorage.getItem('audiobook_progress_chapter')) || 0;
-                currentParagraph = parseInt(localStorage.getItem('audiobook_progress_para')) || 0;
-            }
-        }
-
-        // 儲存進度
+        // 儲存進度 (使用無跨域問題的 no-cors mode 傳送 POST)
         async function syncProgress() {
             try {
                 document.getElementById("btn-sync").innerText = "⏳ 儲存中...";
                 await fetch(GAS_WEB_APP_URL, {
                     method: 'POST',
+                    mode: 'no-cors', // 告訴瀏覽器不要管 CORS 限制，直接送出
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({ userId: USER_ID, chapter: currentChapter, paragraphIndex: currentParagraph })
                 });
+                
                 document.getElementById("btn-sync").innerText = "✅ 儲存成功！";
                 setTimeout(() => document.getElementById("btn-sync").innerText = "☁️ 儲存進度至雲端", 2500);
             } catch(e) {
-                alert("儲存失敗，請確認您的網路連線。");
+                alert("儲存可能失敗，請確認您的網路連線。");
                 document.getElementById("btn-sync").innerText = "☁️ 重新儲存";
             }
         }
